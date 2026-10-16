@@ -1,25 +1,23 @@
-import React from 'react';
-import { portfolioData } from '../data/portfolio';
+import { ArrowUp } from 'lucide-react';
+import { portfolio } from '../data/portfolio';
 
-export const Footer: React.FC = () => {
-  const { name, title } = portfolioData.personal;
-  const currentYear = new Date().getFullYear();
-
+export function Footer() {
+  const me = portfolio.personal;
   return (
-    <footer className="border-t border-slate-200 dark:border-slate-850/80 bg-slate-100/50 dark:bg-slate-900/10 py-10 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+    <footer className="border-t border-white/[0.06] bg-ink-950 pb-24 pt-10 sm:pb-10">
+      <div className="container-x flex flex-col gap-6 text-sm text-ink-400 md:flex-row md:items-center md:justify-between">
         <div>
-          <span className="text-base md:text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-teal-400">
-            {name}
-          </span>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
-            {title}
+          <p className="text-ink-200">
+            © {new Date().getFullYear()} {me.name}
           </p>
+          <p className="mt-1">Built with React, TypeScript, Tailwind CSS and GSAP.</p>
+          <p className="mt-1">Narration uses an AI-generated synthetic voice. It is not {me.firstName}'s own voice.</p>
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-          &copy; {currentYear} {name}. All rights reserved.
-        </p>
+        <a href="#home" className="inline-flex min-h-[44px] items-center gap-2 self-start font-semibold text-ink-200 hover:text-neon md:self-auto">
+          <ArrowUp className="h-4 w-4" aria-hidden="true" />
+          Back to top
+        </a>
       </div>
     </footer>
   );
-};
+}

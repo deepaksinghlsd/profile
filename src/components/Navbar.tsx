@@ -1,163 +1,139 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Github, Linkedin } from 'lucide-react';
-import { portfolioData } from '../data/portfolio';
+import { Code2, Headphones, Menu, MessageSquareText, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useActiveSection } from '../animation/useActiveSection';
+import { portfolio } from '../data/portfolio';
+import { SECTIONS } from '../narration/sections';
+import { tour } from '../tour/tour';
 
-interface NavbarProps {
-  darkMode: boolean;
-  setDarkMode: (dark: boolean) => void;
-}
+const NAV = SECTIONS.filter((s) => s.nav);
 
-export const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
+export function Navbar() {
+  const ids = useMemo(() => SECTIONS.map((s) => s.id), []);
+  const active = useActiveSection(ids);
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { name, github, linkedin } = portfolioData.personal;
-
-  const navItems = [
-    { label: "Home", href: "#home" },
-    { label: "About", href: "#about" },
-    { label: "Skills", href: "#skills" },
-    { label: "Experience", href: "#experience" },
-    { label: "Projects", href: "#projects" },
-    { label: "Resume", href: "#resume" },
-    { label: "Contact", href: "#contact" }
-  ];
+  const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const [first, ...rest] = portfolio.personal.displayName.toUpperCase().split(' ');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleNavClick = (href: string) => {
-    setMenuOpen(false);
-    const element = document.querySelector(href);
-    if (element) {
-      const offset = 80; // Offset for sticky navbar
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
+  // Education sits under "Journey" in the nav.
+  const navActive = active === 'education' ? 'experience' : active;
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass py-3.5 shadow-lg shadow-slate-100/10 dark:shadow-none' : 'bg-transparent py-6'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <a 
-            href="#home" 
-            onClick={(e) => { e.preventDefault(); handleNavClick('#home'); }} 
-            className="text-lg md:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-400 hover:scale-105 transition-transform duration-200"
-          >
-            {name}
-          </a>
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+        scrolled || open ? 'border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl' : 'bg-transparent'
+      }`}
+    >
+      <nav className="container-x flex h-[var(--nav-h)] items-center justify-between gap-4" aria-label="Main">
+        <a href="#home" className="flex items-center gap-3 text-lg font-extrabold tracking-wide text-white sm:text-xl">
+          <Code2 className="h-6 w-6 text-neon" aria-hidden="true" />
+          <span>
+            {first} <span className="text-neon">{rest.join(' ')}</span>
+          </span>
+        </a>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center gap-7">
-            {navItems.map((item, idx) => (
+        <ul className="hidden items-center gap-1 lg:flex">
+          {NAV.map((s) => (
+            <li key={s.id}>
               <a
-                key={idx}
-                href={item.href}
-                onClick={(e) => { e.preventDefault(); handleNavClick(item.href); }}
-                className="text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-blue-500 dark:hover:text-cyan-400 transition-colors duration-200"
+                href={`#${s.id}`}
+                aria-current={navActive === s.id ? 'true' : undefined}
+                className={`relative rounded-lg px-4 py-2 text-[15px] font-medium transition ${
+                  navActive === s.id ? 'text-white' : 'text-ink-300 hover:text-white'
+                }`}
               >
-                {item.label}
+                {s.nav}
+                <span
+                  className={`absolute inset-x-4 -bottom-0.5 h-0.5 rounded-full bg-neon transition-transform duration-300 ${
+                    navActive === s.id ? 'scale-x-100' : 'scale-x-0'
+                  }`}
+                  aria-hidden="true"
+                />
               </a>
-            ))}
-          </div>
-
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-4.5 border-l border-slate-200 dark:border-slate-800/80 pl-6">
-            <a 
-              href={github} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-slate-500 hover:text-slate-900 dark:text-slate-450 dark:hover:text-white transition-colors duration-200"
-              aria-label="GitHub"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <a 
-              href={linkedin} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-slate-500 hover:text-slate-900 dark:text-slate-450 dark:hover:text-white transition-colors duration-200"
-              aria-label="LinkedIn"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/60 dark:hover:bg-slate-800/80 text-slate-600 dark:text-slate-350 transition-colors duration-200"
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-            </button>
-          </div>
-
-          {/* Mobile Actions */}
-          <div className="flex lg:hidden items-center gap-3">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900/60 text-slate-655 dark:text-slate-350"
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-            </button>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900/60 text-slate-655 dark:text-slate-350"
-              aria-label="Toggle Menu"
-            >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="lg:hidden mt-3 mx-4 p-4 rounded-2xl glass border border-slate-200/85 dark:border-slate-850/80 flex flex-col gap-3.5 shadow-xl animate-fade-in">
-          {navItems.map((item, idx) => (
-            <a
-              key={idx}
-              href={item.href}
-              onClick={(e) => { e.preventDefault(); handleNavClick(item.href); }}
-              className="text-sm font-bold text-slate-700 dark:text-slate-300 py-1.5 border-b border-slate-100 dark:border-slate-850/60 last:border-0"
-            >
-              {item.label}
-            </a>
+            </li>
           ))}
-          <div className="flex gap-4 items-center justify-center pt-2.5 border-t border-slate-100 dark:border-slate-850/60">
-            <a 
-              href={github} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300"
-              aria-label="GitHub"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <a 
-              href={linkedin} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300"
-              aria-label="LinkedIn"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-          </div>
+        </ul>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void tour.start()}
+            className="hidden min-h-[44px] items-center gap-2 rounded-xl px-3 text-sm font-semibold text-ink-200 transition hover:text-neon md:inline-flex"
+          >
+            <Headphones className="h-4 w-4" aria-hidden="true" />
+            Guided tour
+          </button>
+          <a href="#contact" className="btn-outline hidden !min-h-[44px] !py-2 sm:inline-flex">
+            <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+            Let's Talk
+          </a>
+          <button
+            ref={menuButton}
+            type="button"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-white lg:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            onClick={() => setOpen((o) => !o)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-      )}
-    </nav>
+      </nav>
+
+      <div id="mobile-menu" hidden={!open} className="border-t border-white/[0.06] lg:hidden">
+        <ul className="container-x grid gap-1 py-4">
+          {NAV.map((s) => (
+            <li key={s.id}>
+              <a
+                href={`#${s.id}`}
+                onClick={() => setOpen(false)}
+                aria-current={navActive === s.id ? 'true' : undefined}
+                className={`flex min-h-[48px] items-center rounded-xl px-4 text-base font-medium ${
+                  navActive === s.id ? 'bg-white/5 text-neon' : 'text-ink-100'
+                }`}
+              >
+                {s.nav}
+              </a>
+            </li>
+          ))}
+          <li className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                setOpen(false);
+                void tour.start();
+              }}
+            >
+              <Headphones className="h-4 w-4" aria-hidden="true" />
+              Guided tour
+            </button>
+            <a href="#contact" className="btn-primary" onClick={() => setOpen(false)}>
+              Let's Talk
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
   );
-};
+}

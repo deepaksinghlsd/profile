@@ -1,59 +1,49 @@
-import { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
-import { Hero } from './sections/Hero';
-import { About } from './sections/About';
-import { Skills } from './sections/Skills';
-import { Experience } from './sections/Experience';
-import { Projects } from './sections/Projects';
-import { Education } from './sections/Education';
-import { ResumeSection } from './sections/ResumeSection';
-import { Contact } from './sections/Contact';
+import { useEffect } from 'react';
+import { ScrollTrigger } from './animation/gsap';
+import { AudioDock } from './components/AudioDock';
 import { Footer } from './components/Footer';
+import { Navbar } from './components/Navbar';
+import { ScrollProgress } from './components/ScrollProgress';
+import { About } from './sections/About';
+import { AiWorkflow } from './sections/AiWorkflow';
+import { Contact } from './sections/Contact';
+import { Education } from './sections/Education';
+import { Experience } from './sections/Experience';
+import { Hero } from './sections/Hero';
+import { Projects } from './sections/Projects';
+import { Skills } from './sections/Skills';
 
-function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    // Default to dark mode as primary theme
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved === 'dark';
-    return true; 
-  });
-
+export default function App() {
+  // Fonts and images change layout after first paint; re-measure trigger positions.
   useEffect(() => {
-    const root = window.document.documentElement;
-    const body = window.document.body;
-    if (darkMode) {
-      root.classList.add('dark');
-      body.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+    const refresh = () => ScrollTrigger.refresh();
+    void document.fonts?.ready.then(refresh);
+    window.addEventListener('load', refresh);
+    return () => window.removeEventListener('load', refresh);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-500/30 dark:selection:bg-cyan-500/30 overflow-x-hidden relative transition-colors duration-300">
-      {/* Background radial overlays */}
-      <div className="absolute top-0 right-0 w-[50vw] h-[50vw] max-h-[600px] bg-gradient-to-bl from-blue-500/5 to-transparent blur-[120px] rounded-full pointer-events-none z-0" />
-      <div className="absolute bottom-[20%] left-0 w-[50vw] h-[50vw] max-h-[600px] bg-gradient-to-tr from-teal-500/5 to-transparent blur-[120px] rounded-full pointer-events-none z-0" />
-
-      <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
-      
-      <main className="relative z-10">
+    <>
+      <a
+        href="#main"
+        className="sr-only z-[70] rounded-lg bg-neon px-4 py-2 font-semibold text-ink-950 focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Skip to content
+      </a>
+      <ScrollProgress />
+      <Navbar />
+      <main id="main">
         <Hero />
         <About />
         <Skills />
-        <Experience />
         <Projects />
+        <Experience />
         <Education />
-        <ResumeSection />
+        <AiWorkflow />
         <Contact />
       </main>
-
       <Footer />
-    </div>
+      <AudioDock />
+    </>
   );
 }
-
-export default App;

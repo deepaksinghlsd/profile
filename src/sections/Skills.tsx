@@ -1,57 +1,96 @@
-import React, { useState } from 'react';
-import { SectionHeading } from '../components/SectionHeading';
-import { SkillCard } from '../components/cards/SkillCard';
-import { portfolioData } from '../data/portfolio';
+import { ArrowDownRight } from 'lucide-react';
+import { useRef } from 'react';
+import { gsap, revealOnScroll, ScrollTrigger, useMotion } from '../animation/gsap';
+import { SectionHeader } from '../components/SectionHeader';
+import { AiIcon, TechIcon } from '../components/TechIcon';
+import { portfolio } from '../data/portfolio';
 
-export const Skills: React.FC = () => {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'frontend' | 'backend' | 'telephony' | 'cloud'>('all');
-  const categories = portfolioData.skills;
+export function Skills() {
+  const ref = useRef<HTMLElement>(null);
 
-  const filteredCategories = categories.filter(cat => {
-    if (selectedFilter === 'all') return true;
-    const title = cat.title.toLowerCase();
-    if (selectedFilter === 'frontend') return title.includes('frontend') || title.includes('languages');
-    if (selectedFilter === 'backend') return title.includes('backend') || title.includes('api') || title.includes('real-time');
-    if (selectedFilter === 'telephony') return title.includes('telephony') || title.includes('ai');
-    if (selectedFilter === 'cloud') return title.includes('cloud') || title.includes('devops') || title.includes('security');
-    return true;
+  useMotion(ref, ({ q }) => {
+    revealOnScroll(q('header [data-reveal]'));
+    const cards = q('[data-skill-card]');
+    gsap.set(cards, { opacity: 0, y: 40 });
+    cards.forEach((card) => gsap.set(card.querySelectorAll('[data-chip]'), { opacity: 0, scale: 0.85 }));
+    ScrollTrigger.batch(cards, {
+      start: 'top 90%',
+      once: true,
+      onEnter: (els) => {
+        gsap.to(els, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.08 });
+        els.forEach((card, i) =>
+          gsap.to(card.querySelectorAll('[data-chip]'), {
+            opacity: 1,
+            scale: 1,
+            duration: 0.4,
+            ease: 'back.out(2)',
+            stagger: 0.035,
+            delay: 0.25 + i * 0.08,
+          }),
+        );
+      },
+    });
   });
 
-  const filterTabs = [
-    { id: 'all', label: 'All Tech' },
-    { id: 'frontend', label: 'Languages & UI' },
-    { id: 'backend', label: 'Backend & APIs' },
-    { id: 'telephony', label: 'AI & VoIP' },
-    { id: 'cloud', label: 'DevOps & Security' }
-  ] as const;
-
   return (
-    <section id="skills" className="py-24 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <SectionHeading 
-          title="Skills & Expertise" 
-          subtitle="My technical stack divided into core domains of engineering." 
+    <section id="skills" ref={ref} aria-labelledby="skills-title" className="relative border-y border-white/[0.05] bg-ink-900/40 py-24 sm:py-32">
+      <div className="container-x">
+        <SectionHeader
+          index="02"
+          eyebrow="Skills"
+          section="skills"
+          title={
+            <>
+              Tools of the <span className="text-neon">trade.</span>
+            </>
+          }
+          intro="Technologies from my resume, grouped by where they show up in my work."
         />
-        
-        {/* Interactive Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
-          {filterTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedFilter(tab.id)}
-              className={`px-4.5 py-2 text-xs font-mono font-bold rounded-xl transition-all duration-300 ${selectedFilter === tab.id ? 'bg-blue-600 dark:bg-cyan-500 text-white dark:text-slate-950 shadow-md shadow-blue-500/10 dark:shadow-cyan-500/5' : 'bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCategories.map((cat, idx) => (
-            <SkillCard key={idx} category={cat} />
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {portfolio.skillGroups.map((g, i) => (
+            <article key={g.id} data-skill-card className="card group p-5 transition-colors duration-300 hover:border-neon/30 sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-lg font-bold text-white">{g.title}</h3>
+                <span className="font-mono text-xs text-ink-400 transition-colors group-hover:text-neon">{String(i + 1).padStart(2, '0')}</span>
+              </div>
+              <p className="mt-1.5 text-sm text-ink-400">{g.blurb}</p>
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {g.skills.map((s) => (
+                  <li key={s.name} data-chip className="chip">
+                    {s.icon && <TechIcon icon={s.icon} className="h-3.5 w-3.5" />}
+                    {s.name}
+                    {s.note && <span className="text-ink-400">· {s.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            </article>
           ))}
+
+          <article
+            data-skill-card
+            className="rounded-2xl border border-dashed border-neon/30 bg-neon/[0.03] p-5 sm:col-span-2 sm:p-6 xl:col-span-4"
+          >
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white">AI &amp; Developer Productivity Tools</h3>
+                <p className="mt-1.5 max-w-md text-sm text-ink-400">Kept separate from the core stack: everyday tools, not credentials.</p>
+              </div>
+              <ul className="flex flex-wrap gap-2">
+                {portfolio.aiTools.map((t) => (
+                  <li key={t.id} data-chip className="chip !py-1.5 text-[14px] text-white">
+                    <AiIcon icon={t.icon} className="h-4 w-4" />
+                    {t.name}
+                  </li>
+                ))}
+              </ul>
+              <a href="#ai-workflow" className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-neon hover:underline">
+                How I use them <ArrowDownRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
+          </article>
         </div>
       </div>
     </section>
   );
-};
+}
